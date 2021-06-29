@@ -19,19 +19,15 @@
 # KIND, either express or implied.
 #
 ###########################################################################
-cmake_minimum_required(VERSION 3.1)
+#cmake_minimum_required(VERSION 3.1)
 
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/")
-include(ConfigureAllModules) 
+#list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/")
+#include(ConfigureAllModules) 
 
 set(LIB_NAME curl)
-project(${LIB_NAME})
+#project(${LIB_NAME})
 
-if(BUILD_SHARED_LIBS)
-  set(CURL_STATICLIB NO)
-else()
-  set(CURL_STATICLIB YES)
-endif()
+set(CURL_STATICLIB NO)
 
 function(transform_makefile_inc INPUT_FILE OUTPUT_FILE)
   file(READ ${INPUT_FILE} MAKEFILE_INC_TEXT)
@@ -50,8 +46,7 @@ endfunction()
 
 # Use:
 # * CURL_STATICLIB
-configure_file(curl_config.h.cmake
-  ${CMAKE_CURRENT_BINARY_DIR}/curl_config.h)
+configure_file(curl_config.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/curl_config.h)
 
 transform_makefile_inc("Makefile.inc" "${CMAKE_CURRENT_BINARY_DIR}/Makefile.inc.cmake")
 include(${CMAKE_CURRENT_BINARY_DIR}/Makefile.inc.cmake)
@@ -99,15 +94,20 @@ if(USE_ARES)
   include_directories(${CARES_INCLUDE_DIR})
 endif()
 
-add_library(
-  ${LIB_NAME}
-  ${HHEADERS} ${CSOURCES}
+set(LIBS )
+if(WIN32)
+	list(APPEND LIBS Wldap32.lib Ws2_32.lib)
+endif()
+
+__add_real_target(${LIB_NAME} dll SOURCE ${HHEADERS} ${CSOURCES}
+								LIB ${LIBS}
+							  INTERFACE ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/../include
   )
 
-add_library(
-  ${PROJECT_NAME}::${LIB_NAME}
-  ALIAS ${LIB_NAME}
-  )
+#add_library(
+#  ${PROJECT_NAME}::${LIB_NAME}
+#  ALIAS ${LIB_NAME}
+#  )
 
 if(NOT BUILD_SHARED_LIBS)
     set_target_properties(${LIB_NAME} PROPERTIES INTERFACE_COMPILE_DEFINITIONS CURL_STATICLIB)
@@ -127,8 +127,8 @@ if(HIDES_CURL_PRIVATE_SYMBOLS)
 endif()
 
 # Remove the "lib" prefix since the library is already named "libcurl".
-set_target_properties(${LIB_NAME} PROPERTIES PREFIX "")
-set_target_properties(${LIB_NAME} PROPERTIES IMPORT_PREFIX "")
+#set_target_properties(${LIB_NAME} PROPERTIES PREFIX "")
+#set_target_properties(${LIB_NAME} PROPERTIES IMPORT_PREFIX "")
 
 if(CURL_HAS_LTO)
   set_target_properties(${LIB_NAME} PROPERTIES
@@ -136,28 +136,28 @@ if(CURL_HAS_LTO)
     INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE)
 endif()
 
-if(WIN32)
-  if(BUILD_SHARED_LIBS)
-    if(MSVC)
-      # Add "_imp" as a suffix before the extension to avoid conflicting with
-      # the statically linked "libcurl.lib"
-      set_target_properties(${LIB_NAME} PROPERTIES IMPORT_SUFFIX "_imp.lib")
-    endif()
-  endif()
-endif()
+#if(WIN32)
+#  if(BUILD_SHARED_LIBS)
+#    if(MSVC)
+#      # Add "_imp" as a suffix before the extension to avoid conflicting with
+#      # the statically linked "libcurl.lib"
+#      set_target_properties(${LIB_NAME} PROPERTIES IMPORT_SUFFIX "_imp.lib")
+#    endif()
+#  endif()
+#endif()
 
-target_include_directories(${LIB_NAME} INTERFACE
-  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
-  $<BUILD_INTERFACE:${CURL_SOURCE_DIR}/include>)
+#target_include_directories(${LIB_NAME} INTERFACE
+#  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+#  $<BUILD_INTERFACE:${CURL_SOURCE_DIR}/include>)
 
-install(TARGETS ${LIB_NAME}
-  EXPORT ${TARGETS_EXPORT_NAME}
-  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-)
-
-export(TARGETS ${LIB_NAME}
-       APPEND FILE ${PROJECT_BINARY_DIR}/libcurl-target.cmake
-       NAMESPACE ${PROJECT_NAME}::
-)
+#install(TARGETS ${LIB_NAME}
+#  EXPORT ${TARGETS_EXPORT_NAME}
+#  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+#  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+#  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+#)
+#
+#export(TARGETS ${LIB_NAME}
+#       APPEND FILE ${PROJECT_BINARY_DIR}/libcurl-target.cmake
+#       NAMESPACE ${PROJECT_NAME}::
+#)
