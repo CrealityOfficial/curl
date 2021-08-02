@@ -25,32 +25,60 @@
 #  Adapted for djgpp2 / Watt-32 / DOS
 #
 
-DEPEND_PREREQ = curl_config.h
-VPATH  = vtls vauth vquic vssh
+DEPEND_PREREQ = # tool_hugehelp.c
+
 TOPDIR = ..
+
+vpath %.c ../lib
 
 include ../packages/DOS/common.dj
 include Makefile.inc
 
-CFLAGS += -DBUILDING_LIBCURL
+CSOURCES = $(CURL_CFILES) $(CURLX_CFILES)
 
-SOURCES = $(sort $(CSOURCES))
-OBJECTS = $(addprefix $(OBJ_DIR)/, $(notdir $(SOURCES:.c=.o)))
+ifeq ($(USE_OPENSSL),1)
+  EX_LIBS += $(OPENSSL_LIBS)
+endif
 
-CURL_LIB = libcurl.a
+ifeq ($(USE_ARES),1)
+  EX_LIBS += $(ARES_ROOT)/libcares.a
+endif
 
-all: $(OBJ_DIR) curl_config.h $(CURL_LIB)
+ifeq ($(USE_ZLIB),1)
+  EX_LIBS += $(ZLIB_ROOT)/libz.a
+  CFLAGS  += -DUSE_MANUAL
+endif
 
-$(CURL_LIB): $(OBJECTS)
-	ar rs $@ $?
+ifeq ($(USE_IDNA),1)
+  EX_LIBS += $(LIBIDN_ROOT)/lib/dj_obj/libidn.a -liconv
+endif
 
-curl_config.h: config-dos.h
-	$(COPY) $^ $@
+EX_LIBS += $(WATT32_ROOT)/lib/libwatt.a
+
+PROGRAM = curl.exe
+OBJECTS = $(addprefix $(OBJ_DIR)/, $(notdir $(CSOURCES:.c=.o)))
+
+all: $(OBJ_DIR) $(PROGRAM)
+	@echo Welcome to curl
+
+$(PROGRAM): $(OBJECTS) ../lib/libcurl.a
+	$(CC) -o $@ $^ $(LDFLAGS) $(EX_LIBS)
+
+#
+# groff 1.18+ requires "-P -c"
+# If 'USE_ZLIB = 1', create a compressed help-file.
+#
+ifeq ($(USE_ZLIB),1)
+  COMPRESS_OPT = -c
+endif
+
+tool_hugehelp.c: ../docs/curl.1 mkhelp.pl Makefile.dj
+	groff -Tascii -man $< | perl -w mkhelp.pl $(COMPRESS_OPT) $< > $@
 
 # clean generated files
 #
 genclean:
-	- $(DELETE) curl_config.h
+	- $(DELETE) tool_hugehelp.c
 
 # clean object files and subdir
 #
@@ -58,7 +86,7 @@ objclean: genclean
 	- $(DELETE) $(OBJ_DIR)$(DS)*.o
 	- $(RMDIR) $(OBJ_DIR)
 
-# clean without removing built library
+# clean without removing built program
 #
 clean: objclean
 	- $(DELETE) depend.dj
@@ -66,6 +94,6 @@ clean: objclean
 # clean everything
 #
 realclean vclean: clean
-	- $(DELETE) $(CURL_LIB)
+	- $(DELETE) $(PROGRAM)
 
 -include depend.dj
