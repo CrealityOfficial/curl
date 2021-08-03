@@ -5,7 +5,7 @@
 #                            | (__| |_| |  _ <| |___
 #                             \___|\___/|_| \_\_____|
 #
-# Copyright (C) 1998 - 2021, Daniel Stenberg, <daniel@haxx.se>, et al.
+# Copyright (C) 1998 - 2020, Daniel Stenberg, <daniel@haxx.se>, et al.
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
@@ -19,119 +19,99 @@
 # KIND, either express or implied.
 #
 ###########################################################################
-#cmake_minimum_required(VERSION 3.1)
+set(EXE_NAME curl)
 
-#list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/")
-#include(ConfigureAllModules) 
+if(USE_MANUAL)
+  # Use the C locale to ensure that only ASCII characters appear in the
+  # embedded text. NROFF and MANOPT are set in the parent CMakeLists.txt
+  add_custom_command(
+    OUTPUT tool_hugehelp.c
+    COMMAND ${CMAKE_COMMAND} -E echo "#include \"tool_setup.h\"" > tool_hugehelp.c
+    COMMAND ${CMAKE_COMMAND} -E echo "#ifndef HAVE_LIBZ" >> tool_hugehelp.c
+    COMMAND env LC_ALL=C "${NROFF}" ${NROFF_MANOPT}
+            "${CURL_BINARY_DIR}/docs/curl.1" |
+            "${PERL_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/mkhelp.pl" >> tool_hugehelp.c
+    COMMAND ${CMAKE_COMMAND} -E echo "#else" >> tool_hugehelp.c
+    COMMAND env LC_ALL=C "${NROFF}" ${NROFF_MANOPT}
+            "${CURL_BINARY_DIR}/docs/curl.1" |
+            "${PERL_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/mkhelp.pl" -c >> tool_hugehelp.c
+    COMMAND ${CMAKE_COMMAND} -E echo "#endif /* HAVE_LIBZ */" >> tool_hugehelp.c
+    DEPENDS
+      generate-curl.1
+      "${CURL_BINARY_DIR}/docs/curl.1"
+      "${CMAKE_CURRENT_SOURCE_DIR}/mkhelp.pl"
+      "${CMAKE_CURRENT_SOURCE_DIR}/tool_hugehelp.h"
+    VERBATIM)
+else()
+  add_custom_command(
+    OUTPUT tool_hugehelp.c
+    COMMAND ${CMAKE_COMMAND} -E echo "/* built-in manual is disabled, blank function */" > tool_hugehelp.c
+    COMMAND ${CMAKE_COMMAND} -E echo "#include \"tool_hugehelp.h\"" >> tool_hugehelp.c
+    COMMAND ${CMAKE_COMMAND} -E echo "void hugehelp(void) {}" >> tool_hugehelp.c
+    DEPENDS
+      "${CMAKE_CURRENT_SOURCE_DIR}/tool_hugehelp.h"
+    VERBATIM)
 
-set(LIB_NAME curl)
-#project(${LIB_NAME})
-
-set(CURL_STATICLIB NO)
-
-function(transform_makefile_inc INPUT_FILE OUTPUT_FILE)
-  file(READ ${INPUT_FILE} MAKEFILE_INC_TEXT)
-  string(REPLACE "$(top_srcdir)"   "\${CURL_SOURCE_DIR}" MAKEFILE_INC_TEXT ${MAKEFILE_INC_TEXT})
-  string(REPLACE "$(top_builddir)" "\${CURL_BINARY_DIR}" MAKEFILE_INC_TEXT ${MAKEFILE_INC_TEXT})
-
-  string(REGEX REPLACE "\\\\\n" "!π!α!" MAKEFILE_INC_TEXT ${MAKEFILE_INC_TEXT})
-  string(REGEX REPLACE "([a-zA-Z_][a-zA-Z0-9_]*)[\t ]*=[\t ]*([^\n]*)" "SET(\\1 \\2)" MAKEFILE_INC_TEXT ${MAKEFILE_INC_TEXT})
-  string(REPLACE "!π!α!" "\n" MAKEFILE_INC_TEXT ${MAKEFILE_INC_TEXT})
-
-  string(REGEX REPLACE "\\$\\(([a-zA-Z_][a-zA-Z0-9_]*)\\)" "\${\\1}" MAKEFILE_INC_TEXT ${MAKEFILE_INC_TEXT})    # Replace $() with ${}
-  string(REGEX REPLACE "@([a-zA-Z_][a-zA-Z0-9_]*)@" "\${\\1}" MAKEFILE_INC_TEXT ${MAKEFILE_INC_TEXT})    # Replace @@ with ${}, even if that may not be read by CMake scripts.
-  file(WRITE ${OUTPUT_FILE} ${MAKEFILE_INC_TEXT})
-  set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${INPUT_FILE}")
-endfunction()
-
-# Use:
-# * CURL_STATICLIB
-configure_file(curl_config.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/curl_config.h)
+endif()
 
 transform_makefile_inc("Makefile.inc" "${CMAKE_CURRENT_BINARY_DIR}/Makefile.inc.cmake")
 include(${CMAKE_CURRENT_BINARY_DIR}/Makefile.inc.cmake)
 
-list(APPEND HHEADERS
-  ${CMAKE_CURRENT_BINARY_DIR}/curl_config.h
+if(MSVC)
+  list(APPEND CURL_FILES curl.rc)
+endif()
+
+# CURL_FILES comes from Makefile.inc
+add_executable(
+  ${EXE_NAME}
+  ${CURL_FILES}
   )
 
-if(WIN32)
-  list(APPEND CSOURCES libcurl.rc)
-endif()
-
-# SET(CSOURCES
-# #  memdebug.c -not used
-# # nwlib.c - Not used
-# # strtok.c - specify later
-# # strtoofft.c - specify later
-# )
-
-# #OPTION(CURL_MALLOC_DEBUG "Debug mallocs in Curl" OFF)
-# MARK_AS_ADVANCED(CURL_MALLOC_DEBUG)
-# IF(CURL_MALLOC_DEBUG)
-# SET(CSOURCES ${CSOURCES}
-# memdebug.c
-# )
-# ENDIF(CURL_MALLOC_DEBUG)
-
-# # only build compat strtoofft if we need to
-# IF(NOT HAVE_STRTOLL AND NOT HAVE__STRTOI64)
-# SET(CSOURCES ${CSOURCES}
-# strtoofft.c
-# )
-# ENDIF(NOT HAVE_STRTOLL AND NOT HAVE__STRTOI64)
-
-
-# The rest of the build
-
-include_directories(${CMAKE_CURRENT_BINARY_DIR}/../include)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/..)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../include)
-include_directories(${CMAKE_CURRENT_BINARY_DIR}/..)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-include_directories(${CMAKE_CURRENT_BINARY_DIR})
-if(USE_ARES)
-  include_directories(${CARES_INCLUDE_DIR})
-endif()
-
-set(LIBS )
-if(WIN32)
-	list(APPEND LIBS Wldap32.lib Ws2_32.lib ssl crypto)
-endif()
-
-list(APPEND LIBS ssl crypto)
-
-__add_real_target(${LIB_NAME} dll SOURCE ${HHEADERS} ${CSOURCES}
-								LIB ${LIBS}
-							  INTERFACE ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/../include
+add_executable(
+  ${PROJECT_NAME}::${EXE_NAME}
+  ALIAS ${EXE_NAME}
   )
-
-
-if(NOT BUILD_SHARED_LIBS)
-    set_target_properties(${LIB_NAME} PROPERTIES INTERFACE_COMPILE_DEFINITIONS CURL_STATICLIB)
-endif()
-
-target_link_libraries(${LIB_NAME} ${CURL_LIBS})
-
-if(WIN32)
-  add_definitions(-D_USRDLL)
-  add_definitions(-DUSE_SSL)
-  add_definitions(-DUSE_OPENSSL)
-endif()
-
-set_target_properties(${LIB_NAME} PROPERTIES COMPILE_DEFINITIONS BUILDING_LIBCURL)
-
-if(HIDES_CURL_PRIVATE_SYMBOLS)
-  set_property(TARGET ${LIB_NAME} APPEND PROPERTY COMPILE_DEFINITIONS "CURL_HIDDEN_SYMBOLS")
-  set_property(TARGET ${LIB_NAME} APPEND PROPERTY COMPILE_FLAGS ${CURL_CFLAG_SYMBOLS_HIDE})
-endif()
 
 if(CURL_HAS_LTO)
-  set_target_properties(${LIB_NAME} PROPERTIES
+  set_target_properties(${EXE_NAME} PROPERTIES
     INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE
     INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE)
 endif()
 
-if(CC_INSTALL_CURL)
-	INSTALL(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../curl/ DESTINATION include/ FILES_MATCHING PATTERN "*.h")
+if(ENABLE_UNICODE AND MINGW)
+  target_link_libraries(${EXE_NAME} -municode)
+  # GCC doesn't know about wmain
+  set_source_files_properties(tool_main.c PROPERTIES COMPILE_FLAGS "-Wno-missing-prototypes -Wno-missing-declarations")
 endif()
+list(APPEND LIBS ssl crypto)
+
+source_group("curlX source files" FILES ${CURLX_CFILES})
+source_group("curl source files" FILES ${CURL_CFILES})
+source_group("curl header files" FILES ${CURL_HFILES})
+
+include_directories(
+  ${CURL_SOURCE_DIR}/lib        # To be able to reach "curl_setup_once.h"
+  ${CURL_BINARY_DIR}/lib        # To be able to reach "curl_config.h"
+  ${CURL_BINARY_DIR}/include    # To be able to reach "curl/curl.h"
+  # This is needed as tool_hugehelp.c is generated in the binary dir
+  ${CURL_SOURCE_DIR}/src        # To be able to reach "tool_hugehelp.h"
+  )
+
+#Build curl executable
+target_link_libraries(${EXE_NAME} libcurl ${CURL_LIBS})
+
+################################################################################
+
+#SET_TARGET_PROPERTIES(${EXE_NAME} ARCHIVE_OUTPUT_DIRECTORY "blah blah blah")
+#SET_TARGET_PROPERTIES(${EXE_NAME} RUNTIME_OUTPUT_DIRECTORY "blah blah blah")
+#SET_TARGET_PROPERTIES(${EXE_NAME} LIBRARY_OUTPUT_DIRECTORY "blah blah blah")
+add_definitions(-DUSE_SSL)
+add_definitions(-DUSE_OPENSSL)
+
+#INCLUDE(ModuleInstall OPTIONAL)
+
+install(TARGETS ${EXE_NAME} EXPORT ${TARGETS_EXPORT_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR})
+export(TARGETS ${EXE_NAME}
+       APPEND FILE ${PROJECT_BINARY_DIR}/curl-target.cmake
+       NAMESPACE ${PROJECT_NAME}::
+)

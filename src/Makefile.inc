@@ -5,7 +5,7 @@
 #                            | (__| |_| |  _ <| |___
 #                             \___|\___/|_| \_\_____|
 #
-# Copyright (C) 1998 - 2021, Daniel Stenberg, <daniel@haxx.se>, et al.
+# Copyright (C) 1998 - 2020, Daniel Stenberg, <daniel@haxx.se>, et al.
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
@@ -19,322 +19,126 @@
 # KIND, either express or implied.
 #
 ###########################################################################
+# ./src/Makefile.inc
+# Using the backslash as line continuation character might be problematic
+# with some make flavours, as Watcom's wmake showed us already. If we
+# ever want to change this in a portable manner then we should consider
+# this idea (posted to the libcurl list by Adam Kellas):
+# CSRC1 = file1.c file2.c file3.c
+# CSRC2 = file4.c file5.c file6.c
+# CSOURCES = $(CSRC1) $(CSRC2)
 
-LIB_VAUTH_CFILES =      \
-  vauth/cleartext.c     \
-  vauth/cram.c          \
-  vauth/digest.c        \
-  vauth/digest_sspi.c   \
-  vauth/gsasl.c         \
-  vauth/krb5_gssapi.c   \
-  vauth/krb5_sspi.c     \
-  vauth/ntlm.c          \
-  vauth/ntlm_sspi.c     \
-  vauth/oauth2.c        \
-  vauth/spnego_gssapi.c \
-  vauth/spnego_sspi.c   \
-  vauth/vauth.c
+# libcurl has sources that provide functions named curlx_* that aren't part of
+# the official API, but we re-use the code here to avoid duplication.
+CURLX_CFILES = \
+  ../lib/strtoofft.c \
+  ../lib/nonblock.c \
+  ../lib/warnless.c \
+  ../lib/curl_ctype.c \
+  ../lib/curl_multibyte.c \
+  ../lib/version_win32.c \
+  ../lib/dynbuf.c
 
-LIB_VAUTH_HFILES =      \
-  vauth/digest.h        \
-  vauth/ntlm.h          \
-  vauth/vauth.h
+CURLX_HFILES = \
+  ../lib/curl_setup.h \
+  ../lib/strtoofft.h \
+  ../lib/nonblock.h \
+  ../lib/warnless.h \
+  ../lib/curl_ctype.h \
+  ../lib/curl_multibyte.h \
+  ../lib/version_win32.h \
+  ../lib/dynbuf.h
 
-LIB_VTLS_CFILES =           \
-  vtls/bearssl.c            \
-  vtls/gskit.c              \
-  vtls/gtls.c               \
-  vtls/keylog.c             \
-  vtls/mbedtls.c            \
-  vtls/mbedtls_threadlock.c \
-  vtls/mesalink.c           \
-  vtls/nss.c                \
-  vtls/openssl.c            \
-  vtls/rustls.c             \
-  vtls/schannel.c           \
-  vtls/schannel_verify.c    \
-  vtls/sectransp.c          \
-  vtls/vtls.c               \
-  vtls/wolfssl.c
+CURL_CFILES = \
+  slist_wc.c \
+  tool_binmode.c \
+  tool_bname.c \
+  tool_cb_dbg.c \
+  tool_cb_hdr.c \
+  tool_cb_prg.c \
+  tool_cb_rea.c \
+  tool_cb_see.c \
+  tool_cb_wrt.c \
+  tool_cfgable.c \
+  tool_convert.c \
+  tool_dirhie.c \
+  tool_doswin.c \
+  tool_easysrc.c \
+  tool_filetime.c \
+  tool_formparse.c \
+  tool_getparam.c \
+  tool_getpass.c \
+  tool_help.c \
+  tool_helpers.c \
+  tool_homedir.c \
+  tool_hugehelp.c \
+  tool_libinfo.c \
+  tool_main.c \
+  tool_metalink.c \
+  tool_msgs.c \
+  tool_operate.c \
+  tool_operhlp.c \
+  tool_panykey.c \
+  tool_paramhlp.c \
+  tool_parsecfg.c \
+  tool_progress.c \
+  tool_strdup.c \
+  tool_setopt.c \
+  tool_sleep.c \
+  tool_urlglob.c \
+  tool_util.c \
+  tool_vms.c \
+  tool_writeout.c \
+  tool_writeout_json.c \
+  tool_xattr.c
 
-LIB_VTLS_HFILES =           \
-  vtls/bearssl.h            \
-  vtls/gskit.h              \
-  vtls/gtls.h               \
-  vtls/keylog.h             \
-  vtls/mbedtls.h            \
-  vtls/mbedtls_threadlock.h \
-  vtls/mesalink.h           \
-  vtls/nssg.h               \
-  vtls/openssl.h            \
-  vtls/rustls.h             \
-  vtls/schannel.h           \
-  vtls/sectransp.h          \
-  vtls/vtls.h               \
-  vtls/wolfssl.h
+CURL_HFILES = \
+  slist_wc.h \
+  tool_binmode.h \
+  tool_bname.h \
+  tool_cb_dbg.h \
+  tool_cb_hdr.h \
+  tool_cb_prg.h \
+  tool_cb_rea.h \
+  tool_cb_see.h \
+  tool_cb_wrt.h \
+  tool_cfgable.h \
+  tool_convert.h \
+  tool_dirhie.h \
+  tool_doswin.h \
+  tool_easysrc.h \
+  tool_filetime.h \
+  tool_formparse.h \
+  tool_getparam.h \
+  tool_getpass.h \
+  tool_help.h \
+  tool_helpers.h \
+  tool_homedir.h \
+  tool_hugehelp.h \
+  tool_libinfo.h \
+  tool_main.h \
+  tool_metalink.h \
+  tool_msgs.h \
+  tool_operate.h \
+  tool_operhlp.h \
+  tool_panykey.h \
+  tool_paramhlp.h \
+  tool_parsecfg.h \
+  tool_progress.h \
+  tool_sdecls.h \
+  tool_setopt.h \
+  tool_setup.h \
+  tool_sleep.h \
+  tool_strdup.h \
+  tool_urlglob.h \
+  tool_util.h \
+  tool_version.h \
+  tool_vms.h \
+  tool_writeout.h \
+  tool_writeout_json.h \
+  tool_xattr.h
 
-LIB_VQUIC_CFILES = \
-  vquic/ngtcp2.c   \
-  vquic/quiche.c   \
-  vquic/vquic.c
+CURL_RCFILES = curl.rc
 
-LIB_VQUIC_HFILES = \
-  vquic/ngtcp2.h   \
-  vquic/quiche.h   \
-  vquic/vquic.h
-
-LIB_VSSH_CFILES =  \
-  vssh/libssh.c    \
-  vssh/libssh2.c   \
-  vssh/wolfssh.c
-
-LIB_VSSH_HFILES =  \
-  vssh/ssh.h
-
-LIB_CFILES =         \
-  altsvc.c           \
-  amigaos.c          \
-  asyn-ares.c        \
-  asyn-thread.c      \
-  base64.c           \
-  c-hyper.c          \
-  conncache.c        \
-  connect.c          \
-  content_encoding.c \
-  cookie.c           \
-  curl_addrinfo.c    \
-  curl_ctype.c       \
-  curl_des.c         \
-  curl_endian.c      \
-  curl_fnmatch.c     \
-  curl_get_line.c    \
-  curl_gethostname.c \
-  curl_gssapi.c      \
-  curl_memrchr.c     \
-  curl_multibyte.c   \
-  curl_ntlm_core.c   \
-  curl_ntlm_wb.c     \
-  curl_path.c        \
-  curl_range.c       \
-  curl_rtmp.c        \
-  curl_sasl.c        \
-  curl_sspi.c        \
-  curl_threads.c     \
-  dict.c             \
-  doh.c              \
-  dotdot.c           \
-  dynbuf.c           \
-  easy.c             \
-  easygetopt.c       \
-  easyoptions.c      \
-  escape.c           \
-  file.c             \
-  fileinfo.c         \
-  formdata.c         \
-  ftp.c              \
-  ftplistparser.c    \
-  getenv.c           \
-  getinfo.c          \
-  gopher.c           \
-  hash.c             \
-  hmac.c             \
-  hostasyn.c         \
-  hostcheck.c        \
-  hostip.c           \
-  hostip4.c          \
-  hostip6.c          \
-  hostsyn.c          \
-  hsts.c             \
-  http.c             \
-  http2.c            \
-  http_chunks.c      \
-  http_digest.c      \
-  http_negotiate.c   \
-  http_ntlm.c        \
-  http_proxy.c       \
-  http_aws_sigv4.c   \
-  idn_win32.c        \
-  if2ip.c            \
-  imap.c             \
-  inet_ntop.c        \
-  inet_pton.c        \
-  krb5.c             \
-  ldap.c             \
-  llist.c            \
-  md4.c              \
-  md5.c              \
-  memdebug.c         \
-  mime.c             \
-  mprintf.c          \
-  mqtt.c             \
-  multi.c            \
-  netrc.c            \
-  non-ascii.c        \
-  nonblock.c         \
-  openldap.c         \
-  parsedate.c        \
-  pingpong.c         \
-  pop3.c             \
-  progress.c         \
-  psl.c              \
-  rand.c             \
-  rename.c           \
-  rtsp.c             \
-  select.c           \
-  sendf.c            \
-  setopt.c           \
-  sha256.c           \
-  share.c            \
-  slist.c            \
-  smb.c              \
-  smtp.c             \
-  socketpair.c       \
-  socks.c            \
-  socks_gssapi.c     \
-  socks_sspi.c       \
-  speedcheck.c       \
-  splay.c            \
-  strcase.c          \
-  strdup.c           \
-  strerror.c         \
-  strtok.c           \
-  strtoofft.c        \
-  system_win32.c     \
-  telnet.c           \
-  tftp.c             \
-  timeval.c          \
-  transfer.c         \
-  url.c              \
-  urlapi.c           \
-  version.c          \
-  version_win32.c    \
-  warnless.c         \
-  wildcard.c         \
-  x509asn1.c
-
-LIB_HFILES =         \
-  altsvc.h           \
-  amigaos.h          \
-  arpa_telnet.h      \
-  asyn.h             \
-  c-hyper.h          \
-  conncache.h        \
-  connect.h          \
-  content_encoding.h \
-  cookie.h           \
-  curl_addrinfo.h    \
-  curl_base64.h      \
-  curl_ctype.h       \
-  curl_des.h         \
-  curl_endian.h      \
-  curl_fnmatch.h     \
-  curl_get_line.h    \
-  curl_gethostname.h \
-  curl_gssapi.h      \
-  curl_hmac.h        \
-  curl_krb5.h        \
-  curl_ldap.h        \
-  curl_md4.h         \
-  curl_md5.h         \
-  curl_memory.h      \
-  curl_memrchr.h     \
-  curl_multibyte.h   \
-  curl_ntlm_core.h   \
-  curl_ntlm_wb.h     \
-  curl_path.h        \
-  curl_printf.h      \
-  curl_range.h       \
-  curl_rtmp.h        \
-  curl_sasl.h        \
-  curl_setup.h       \
-  curl_setup_once.h  \
-  curl_sha256.h      \
-  curl_sspi.h        \
-  curl_threads.h     \
-  curlx.h            \
-  dict.h             \
-  doh.h              \
-  dotdot.h           \
-  dynbuf.h           \
-  easyif.h           \
-  easyoptions.h      \
-  escape.h           \
-  file.h             \
-  fileinfo.h         \
-  formdata.h         \
-  ftp.h              \
-  ftplistparser.h    \
-  getinfo.h          \
-  gopher.h           \
-  hash.h             \
-  hostcheck.h        \
-  hostip.h           \
-  hsts.h             \
-  http.h             \
-  http2.h            \
-  http_chunks.h      \
-  http_digest.h      \
-  http_negotiate.h   \
-  http_ntlm.h        \
-  http_proxy.h       \
-  http_aws_sigv4.h   \
-  if2ip.h            \
-  imap.h             \
-  inet_ntop.h        \
-  inet_pton.h        \
-  llist.h            \
-  memdebug.h         \
-  mime.h             \
-  mqtt.h             \
-  multihandle.h      \
-  multiif.h          \
-  netrc.h            \
-  non-ascii.h        \
-  nonblock.h         \
-  parsedate.h        \
-  pingpong.h         \
-  pop3.h             \
-  progress.h         \
-  psl.h              \
-  quic.h             \
-  rand.h             \
-  rename.h           \
-  rtsp.h             \
-  select.h           \
-  sendf.h            \
-  setopt.h           \
-  setup-vms.h        \
-  share.h            \
-  sigpipe.h          \
-  slist.h            \
-  smb.h              \
-  smtp.h             \
-  sockaddr.h         \
-  socketpair.h       \
-  socks.h            \
-  speedcheck.h       \
-  splay.h            \
-  strcase.h          \
-  strdup.h           \
-  strerror.h         \
-  strtok.h           \
-  strtoofft.h        \
-  system_win32.h     \
-  telnet.h           \
-  tftp.h             \
-  timeval.h          \
-  transfer.h         \
-  url.h              \
-  urlapi-int.h       \
-  urldata.h          \
-  version_win32.h    \
-  warnless.h         \
-  wildcard.h         \
-  x509asn1.h
-
-LIB_RCFILES = libcurl.rc
-
-CSOURCES = $(LIB_CFILES) $(LIB_VAUTH_CFILES) $(LIB_VTLS_CFILES) \
-  $(LIB_VQUIC_CFILES) $(LIB_VSSH_CFILES)
-HHEADERS = $(LIB_HFILES) $(LIB_VAUTH_HFILES) $(LIB_VTLS_HFILES) \
-  $(LIB_VQUIC_HFILES) $(LIB_VSSH_HFILES)
+# curl_SOURCES is special and gets assigned in src/Makefile.am
+CURL_FILES = $(CURL_CFILES) $(CURLX_CFILES) $(CURL_HFILES)
