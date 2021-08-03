@@ -83,6 +83,7 @@ if(ENABLE_UNICODE AND MINGW)
   # GCC doesn't know about wmain
   set_source_files_properties(tool_main.c PROPERTIES COMPILE_FLAGS "-Wno-missing-prototypes -Wno-missing-declarations")
 endif()
+list(APPEND LIBS ssl crypto)
 
 source_group("curlX source files" FILES ${CURLX_CFILES})
 source_group("curl source files" FILES ${CURL_CFILES})
@@ -104,6 +105,8 @@ target_link_libraries(${EXE_NAME} libcurl ${CURL_LIBS})
 #SET_TARGET_PROPERTIES(${EXE_NAME} ARCHIVE_OUTPUT_DIRECTORY "blah blah blah")
 #SET_TARGET_PROPERTIES(${EXE_NAME} RUNTIME_OUTPUT_DIRECTORY "blah blah blah")
 #SET_TARGET_PROPERTIES(${EXE_NAME} LIBRARY_OUTPUT_DIRECTORY "blah blah blah")
+add_definitions(-DUSE_SSL)
+add_definitions(-DUSE_OPENSSL)
 
 #INCLUDE(ModuleInstall OPTIONAL)
 
