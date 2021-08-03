@@ -96,13 +96,16 @@ endif()
 
 set(LIBS )
 if(WIN32)
-	list(APPEND LIBS Wldap32.lib Ws2_32.lib)
+	list(APPEND LIBS Wldap32.lib Ws2_32.lib ssl crypto)
 endif()
+
+list(APPEND LIBS ssl crypto)
 
 __add_real_target(${LIB_NAME} dll SOURCE ${HHEADERS} ${CSOURCES}
 								LIB ${LIBS}
 							  INTERFACE ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/../include
   )
+
 
 if(NOT BUILD_SHARED_LIBS)
     set_target_properties(${LIB_NAME} PROPERTIES INTERFACE_COMPILE_DEFINITIONS CURL_STATICLIB)
@@ -112,6 +115,8 @@ target_link_libraries(${LIB_NAME} ${CURL_LIBS})
 
 if(WIN32)
   add_definitions(-D_USRDLL)
+  add_definitions(-DUSE_SSL)
+  add_definitions(-DUSE_OPENSSL)
 endif()
 
 set_target_properties(${LIB_NAME} PROPERTIES COMPILE_DEFINITIONS BUILDING_LIBCURL)
