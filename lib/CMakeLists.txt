@@ -22,6 +22,15 @@
 set(LIB_NAME curl)
 set(LIBCURL_OUTPUT_NAME curl CACHE STRING "Basename of the curl library")
 
+if(CMAKE_USE_OPENSSL)
+	if(TARGET ssl)
+		list(APPEND CURL_LIBS ssl crypto)
+		message("append ssl crypto...")
+	endif()
+	add_definitions(-DUSE_SSL)
+    add_definitions(-DUSE_OPENSSL)
+endif()
+
 if(BUILD_SHARED_LIBS)
   set(CURL_STATICLIB NO)
 else()

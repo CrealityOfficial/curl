@@ -343,7 +343,7 @@ set(openssl_default ON)
 if(WIN32 OR CMAKE_USE_SECTRANSP OR CMAKE_USE_SCHANNEL OR CMAKE_USE_MBEDTLS OR CMAKE_USE_NSS OR CMAKE_USE_WOLFSSL)
   set(openssl_default OFF)
 endif()
-option(CMAKE_USE_OPENSSL "Use OpenSSL code. Experimental" OFF)
+option(CMAKE_USE_OPENSSL "Use OpenSSL code. Experimental" ON)
 option(CURL_DISABLE_OPENSSL_AUTO_LOAD_CONFIG "Disable automatic loading of OpenSSL configuration" OFF)
 
 count_true(enabled_ssl_options_count
@@ -390,20 +390,24 @@ if(CMAKE_USE_SECTRANSP)
 endif()
 
 if(CMAKE_USE_OPENSSL)
-  find_package(OpenSSL REQUIRED)
-  set(SSL_ENABLED ON)
-  set(USE_OPENSSL ON)
-
-  # Depend on OpenSSL via imported targets if supported by the running
-  # version of CMake.  This allows our dependents to get our dependencies
-  # transitively.
-  if(NOT CMAKE_VERSION VERSION_LESS 3.4)
-    list(APPEND CURL_LIBS OpenSSL::SSL OpenSSL::Crypto)
-  else()
-    list(APPEND CURL_LIBS ${OPENSSL_LIBRARIES})
-    include_directories(${OPENSSL_INCLUDE_DIR})
-  endif()
-
+	if(NOT TARGET ssl)
+		find_package(OpenSSL REQUIRED)
+		set(SSL_ENABLED ON)
+		set(USE_OPENSSL ON)
+		
+		# Depend on OpenSSL via imported targets if supported by the running
+		# version of CMake.  This allows our dependents to get our dependencies
+		# transitively.
+		if(NOT CMAKE_VERSION VERSION_LESS 3.4)
+			list(APPEND CURL_LIBS OpenSSL::SSL OpenSSL::Crypto)
+		else()
+			list(APPEND CURL_LIBS ${OPENSSL_LIBRARIES})
+			include_directories(${OPENSSL_INCLUDE_DIR})
+		endif()
+	# else()
+		# list(APPEND CURL_LIBS ssl crypto)
+	endif()
+	
   set(CMAKE_REQUIRED_INCLUDES ${OPENSSL_INCLUDE_DIR})
   check_include_file("openssl/crypto.h" HAVE_OPENSSL_CRYPTO_H)
   check_include_file("openssl/err.h"    HAVE_OPENSSL_ERR_H)
