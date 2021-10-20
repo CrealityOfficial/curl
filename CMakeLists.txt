@@ -1590,3 +1590,7 @@ if(NOT TARGET uninstall)
       COMMAND ${CMAKE_COMMAND} -P
       ${CURL_BINARY_DIR}/CMake/cmake_uninstall.cmake)
 endif()
+
+if(CC_INSTALL_CURL)
+	INSTALL(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/ DESTINATION include/curl/ FILES_MATCHING PATTERN "*.h")
+endif()
