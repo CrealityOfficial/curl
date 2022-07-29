@@ -48,6 +48,8 @@ include(Macros)
 include(CMakeDependentOption)
 include(CheckCCompilerFlag)
 
+__CC_find(Openssl)
+
 file(STRINGS ${CURL_SOURCE_DIR}/include/curl/curlver.h CURL_VERSION_H_CONTENTS REGEX "#define LIBCURL_VERSION( |_NUM )")
 #message(STATUS "Curl debug ---> CURL_VERSION_H_CONTENTS : ${CURL_VERSION_H_CONTENTS}")
 
