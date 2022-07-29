@@ -393,22 +393,19 @@ endif()
 
 if(CMAKE_USE_OPENSSL)
 	if(NOT TARGET ssl)
-		find_package(OpenSSL REQUIRED)
+    __cc_find(OpenSSL)
+  endif()
+
+	#find_package(OpenSSL REQUIRED)
 		set(SSL_ENABLED ON)
 		set(USE_OPENSSL ON)
 		
+    message(STATUS "build libcurl CMAKE_USE_OPENSSL  --- ")
 		# Depend on OpenSSL via imported targets if supported by the running
 		# version of CMake.  This allows our dependents to get our dependencies
 		# transitively.
-		if(NOT CMAKE_VERSION VERSION_LESS 3.4)
-			list(APPEND CURL_LIBS OpenSSL::SSL OpenSSL::Crypto)
-		else()
-			list(APPEND CURL_LIBS ${OPENSSL_LIBRARIES})
-			include_directories(${OPENSSL_INCLUDE_DIR})
-		endif()
-	# else()
-		# list(APPEND CURL_LIBS ssl crypto)
-	endif()
+    list(APPEND CURL_LIBS ssl crypto)
+    include_directories(${OPENSSL_INCLUDE_DIR})
 	
   set(CMAKE_REQUIRED_INCLUDES ${OPENSSL_INCLUDE_DIR})
   check_include_file("openssl/crypto.h" HAVE_OPENSSL_CRYPTO_H)
