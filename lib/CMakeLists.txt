@@ -20,7 +20,7 @@
 #
 ###########################################################################
 set(LIB_NAME curl_static)
-set(LIBCURL_OUTPUT_NAME curl CACHE STRING "Basename of the curl library")
+set(LIBCURL_OUTPUT_NAME ${LIB_NAME} CACHE STRING "Basename of the curl library")
 
 if(CMAKE_USE_OPENSSL)
 	if(TARGET ssl)
