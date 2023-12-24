@@ -19,7 +19,7 @@
 # KIND, either express or implied.
 #
 ###########################################################################
-set(LIB_NAME curl)
+set(LIB_NAME curl_static)
 set(LIBCURL_OUTPUT_NAME curl CACHE STRING "Basename of the curl library")
 
 if(CMAKE_USE_OPENSSL)

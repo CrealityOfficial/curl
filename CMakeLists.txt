@@ -48,7 +48,7 @@ include(Macros)
 include(CMakeDependentOption)
 include(CheckCCompilerFlag)
 
-__CC_find(Openssl)
+__cc_find(openssl)
 
 file(STRINGS ${CURL_SOURCE_DIR}/include/curl/curlver.h CURL_VERSION_H_CONTENTS REGEX "#define LIBCURL_VERSION( |_NUM )")
 #message(STATUS "Curl debug ---> CURL_VERSION_H_CONTENTS : ${CURL_VERSION_H_CONTENTS}")
@@ -74,8 +74,8 @@ include_directories(${CURL_SOURCE_DIR}/include)
 option(CURL_WERROR "Turn compiler warnings into errors" OFF)
 option(PICKY_COMPILER "Enable picky compiler options" ON)
 option(BUILD_CURL_EXE "Set to ON to build curl executable." OFF)
-option(BUILD_SHARED_LIBS "Build shared libraries" ON)
-set(BUILD_SHARED_LIBS 1)
+option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
+set(BUILD_SHARED_LIBS 0)
 
 option(ENABLE_ARES "Set to ON to enable c-ares support" OFF)
 
@@ -1596,7 +1596,7 @@ if(NOT TARGET uninstall)
       ${CURL_BINARY_DIR}/CMake/cmake_uninstall.cmake)
 endif()
 
-if(CC_INSTALL_CURL)
+if(CC_INSTALL_CURL_STATIC)
     if(HAVE_CONAN_CACHE OR CREATE_CONAN_PACKAGE)
 		INSTALL(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/ DESTINATION include/ FILES_MATCHING PATTERN "*.h")
     else()
